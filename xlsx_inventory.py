@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import os.path
 import json
 import argparse
 import configparser
@@ -8,10 +7,14 @@ from openpyxl import load_workbook
 from openpyxl.utils import coordinate_from_string, column_index_from_string
 
 config_file = 'xlsx_inventory.cfg'
+default_group = 'NO_GROUP'
 
 
 def main():
     args = parse_args()
+    if args.config:
+        create_config(filename=args.file, group_by_col=args.group_by_col, hostname_col=args.hostname_col,
+                      sheet=args.sheet)
     config = load_config()
     try:
         wb = load_workbook(config['xlsx_inventory_file'])
@@ -19,9 +22,13 @@ def main():
             sheet = wb[config['sheet']]
         else:
             sheet = wb.active
-        inventory = sheet_to_inventory(group_by_col=config['group_by_col'], hostname_col=config['hostname_col'], sheet=sheet)
+        inventory = sheet_to_inventory(group_by_col=config['group_by_col'], hostname_col=config['hostname_col'],
+                                       sheet=sheet)
         if args.list:
             print(json.dumps(inventory, indent=4, sort_keys=True))
+        if args.config:
+            create_config(filename=args.file, group_by_col=args.group_by_col, hostname_col=args.hostname_col,
+                          sheet=args.sheet)
         elif args.host:
             try:
                 print(json.dumps(
@@ -44,16 +51,31 @@ def main():
     exit(0)
 
 
+def create_config(filename=None, group_by_col=None, hostname_col=None, sheet=None):
+    config = configparser.ConfigParser()
+    config['xlsx_inventory'] = {}
+    if filename is None:
+        print('\033[91m--file is required!\033[0m')
+        exit(1)
+    config['xlsx_inventory']['xlsx_inventory_file'] = filename
+    if group_by_col is not None:
+        config['xlsx_inventory']['group_by_col'] = group_by_col
+    if hostname_col is not None:
+        config['xlsx_inventory']['hostname_col'] = hostname_col
+    if sheet is not None:
+        config['xlsx_inventory']['sheet'] = sheet
+    with open(config_file, 'w')as cf:
+        config.write(cf)
+
+
 def load_config():
     config = configparser.ConfigParser()
-    config['DEFAULT'] = {'hostname_col': 'A', 'group_by_col': 'B', 'xlsx_inventory_file': 'inventory.xlsx'}
-    config['xlsx_inventory'] = {}
-    if os.path.isfile(config_file):
-        config.read(config_file)
+    config['DEFAULT'] = {'hostname_col': 'A', 'group_by_col': 'B'}
+    if len(config.read(config_file)) > 0:
+        return config['xlsx_inventory']
     else:
-        with open(config_file, 'w')as cf:
-            config.write(cf)
-    return config['xlsx_inventory']
+        print('\033[91mConfiguration File "%s" not Found!\033[0m' % config_file)
+        exit(1)
 
 
 def parse_args():
@@ -61,6 +83,11 @@ def parse_args():
     group = arg_parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--list', action='store_true', help='List active servers')
     group.add_argument('--host', help='List details about the specified host', default=None)
+    group.add_argument('--config', action='store_true', help='Create Config File')
+    arg_parser.add_argument('--file', default=None, help='Excel Spreadsheet file used by xlsx_inventory.py')
+    arg_parser.add_argument('--group-by-col', default=None, help='Column to group hosts by (i.E. `B`)')
+    arg_parser.add_argument('--hostname-col', default=None, help='Column containing the hostnames')
+    arg_parser.add_argument('--sheet', default=None, help='Name of the Sheet, used by xlsx_inventory.py')
     return arg_parser.parse_args()
 
 
@@ -78,15 +105,23 @@ def sheet_to_inventory(group_by_col, hostname_col, sheet):
     rows = list(sheet.rows)
 
     for row in rows[1:]:
-        if row[group_by_col].value not in groups.keys():
-            groups[row[group_by_col].value] = {
+        host = row[hostname_col].value
+        if host is None:
+            continue
+        group = row[group_by_col].value
+        if group is None:
+            group = default_group
+        if group not in groups.keys():
+            groups[group] = {
                 'hosts': [],
                 'vars': {}
             }
-        groups[row[group_by_col].value]['hosts'].append(row[hostname_col].value)
+        groups[group]['hosts'].append(row[hostname_col].value)
         groups['_meta']['hostvars'][row[hostname_col].value] = {}
         for xlsx_head in rows[:1]:
             for idx, var_name in enumerate(xlsx_head):
+                if var_name.value is None:
+                    var_name.value = "xlsx_" + var_name.coordinate
                 if row[idx].value is not None:
                     groups['_meta']['hostvars'][row[0].value][var_name.value.lower().replace(' ', '_')] = row[idx].value
 
