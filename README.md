@@ -1,4 +1,4 @@
-# Excel dynamic inventory script
+# Excel/Ansible Dynamic Inventory script
 
 ## ToC
 
@@ -13,22 +13,27 @@
 
 ## Intro
 
-This is a dynamic inventory script for Ansible that turns an Excel Sheet into an Inventory.
+This is a dynamic Inventory script for Ansible that turns an Excel Spreadsheet into an Inventory.
 
-This is helpful whenever you get an Export from another Tool, containing Information
-on server which you need to quickly access via Ansible, without manually writing an Inventory beforehand.
+This is helpful whenever you get an Excel export from another Tool, containing Information on server, which you need to quickly access via Ansible, without manually writing an Inventory file beforehand.
 
 ## Requirements
 
-The following requirements must be installed to use this Inventory Script: 
+The following requirements must be installed to use this Inventory Script:
 
+- [Python](https://www.python.org/) - Python programming language
 - [OpenPyXL](https://openpyxl.readthedocs.io/en/stable/) - A Python library to read/write Excel 2010 xlsx/xlsm files
 
 ## Compatibility
 
-Supported Excel file formats are: `.xlsx`,`.xlsm`,`.xltx`,`.xltm`
+Supported Excel file formats are:
 
-Tested Ansible Version is: 2.6.2 (but it should be compatible with all Ansible Version supporting Dynamic inventory scripts)
+- `.xlsx`
+- `.xlsm`
+- `.xltx`
+- `.xltm`
+
+Tested Ansible Version is: `2.6.2` (but it should be compatible with all Ansible version supporting Dynamic Inventory scripts)
 
 ## Configuration
 
@@ -44,7 +49,11 @@ hostname_col = A
 group_by_col = B
 ```
 
-If no such configuration file exists, you can easily create it by running `xlsx_inventory.py --file example.xlsx --hostname-col A --group-by-col B --sheet Sheet1`.
+If no such configuration file exists, you can easily create it by running:
+
+```bash
+xlsx_inventory.py --config --file example.xlsx --hostname-col A --group-by-col B --sheet Sheet1
+```
 
 ## Example File
 
@@ -96,7 +105,7 @@ To check which host variables are set by the inventory/xlsx file, you can run `x
 
 ## Usage
 
-Once [configured](#configuration) the Inventory script can be used like any other Dynamic inventory by specifying it as the inventory in your ansible/ansible-playbook commands:
+Once [configured](#configuration) the Inventory script can be used like any other Dynamic Inventory by specifying it as the inventory in your ansible/ansible-playbook commands:
 
 ```bash
 ./xlsx_inventory.py --config --file example.xlsx --group-by-col B --hostname-col A --sheet Sheet2
