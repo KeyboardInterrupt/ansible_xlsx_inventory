@@ -1,1 +1,3 @@
 openpyxl
+## python2
+# configparser

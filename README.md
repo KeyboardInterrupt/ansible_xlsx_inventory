@@ -52,7 +52,7 @@ group_by_col = B
 If no such configuration file exists, you can easily create it by running:
 
 ```bash
-xlsx_inventory.py --config --file example.xlsx --hostname-col A --group-by-col B --sheet Sheet1
+./xlsx_inventory.py --config --file example.xlsx --hostname-col A --group-by-col B --sheet Sheet1
 ```
 
 ## Example File
@@ -110,6 +110,56 @@ Once [configured](#configuration) the Inventory script can be used like any othe
 ```bash
 ./xlsx_inventory.py --config --file example.xlsx --group-by-col B --hostname-col A --sheet Sheet2
 ansible -i xlsx_inventory.py -m ping dev-zornfix-app01
+```
+
+### Usage inside AWX or Ansible Tower
+
+If you put your xlsx file inside of the same git repository as this script, then you can import the inventory contents via an SCM-based inventory source into an AWX or Ansible Tower server.
+
+Step by step instructions, must be done by a superuser:
+
+ - Inside the Ansible virtualenv, install needed packages
+   - `pip install openpyxl`
+   - `pip install configparser`
+ - Create a credential type that defines the inputs and injectors below (must be superuser)
+ - Create a credential, providing any values unique to your project
+ - Create an inventory
+ - Create an inventory source
+   - source from project
+   - apply the credential from earlier
+   - select the inventory file `xlsx_inventory.py`
+ - Save and update the inventory source
+
+The inputs needed for the credential type:
+
+```yaml
+fields:
+  - type: string
+    id: excel_file
+    label: Location of Excel file
+  - type: string
+    id: group_by_col
+    label: Column letter to group hosts by
+  - type: string
+    id: hostname_col
+    label: Column that contains hostnames
+  - type: string
+    id: sheet
+    label: Sheet in Excel to use
+```
+
+Injectors needed for the credential type:
+
+```yaml
+env:
+  EXCEL_INVENTORY_CONFIG: '{{tower.filename}}'
+file:
+  template: |-
+    [xlsx_inventory]
+    xlsx_inventory_file = {{excel_file | default('example.xlsx')}}
+    group_by_col = {{group_by_col | default('B')}}
+    hostname_col = {{ hostname_col | default('A') }}
+    sheet = {{ sheet | default('Sheet1') }}
 ```
 
 ## License
