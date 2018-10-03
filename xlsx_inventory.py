@@ -1,13 +1,29 @@
 #!/usr/bin/env python
 
 import json
+import os
 import argparse
 import configparser
+import six
 from openpyxl import load_workbook
 from openpyxl.utils import coordinate_from_string, column_index_from_string
 
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
+
 config_file = 'xlsx_inventory.cfg'
 default_group = 'NO_GROUP'
+
+
+def find_config_file():
+    env_name = 'EXCEL_INVENTORY_CONFIG'
+    if env_name in os.environ:
+        return os.environ[env_name]
+    else:
+        return config_file
 
 
 def main():
@@ -15,7 +31,8 @@ def main():
     if args.config:
         create_config(filename=args.file, group_by_col=args.group_by_col, hostname_col=args.hostname_col,
                       sheet=args.sheet)
-    config = load_config()
+    config_path = find_config_file()
+    config = load_config(config_path)
     try:
         wb = load_workbook(config['xlsx_inventory_file'])
         if 'sheet' in config:
@@ -40,12 +57,12 @@ def main():
     except FileNotFoundError as e:
         print(
             '\033[91mFile Not Found! Check %s configuration file!'
-            ' Is the `xlsx_inventory_file` path setting correct?\033[0m' % config_file)
+            ' Is the `xlsx_inventory_file` path setting correct?\033[0m' % config_path)
         print(e)
         exit(1)
     except KeyError as e:
         print(
-            '\033[91mKey Error! Check %s configuration file! Is the `sheet` name setting correct?\033[0m' % config_file)
+            '\033[91mKey Error! Check %s configuration file! Is the `sheet` name setting correct?\033[0m' % config_path)
         print(e)
         exit(1)
     exit(0)
@@ -64,17 +81,17 @@ def create_config(filename=None, group_by_col=None, hostname_col=None, sheet=Non
         config['xlsx_inventory']['hostname_col'] = hostname_col
     if sheet is not None:
         config['xlsx_inventory']['sheet'] = sheet
-    with open(config_file, 'w')as cf:
+    with open(find_config_file(), 'w')as cf:
         config.write(cf)
 
 
-def load_config():
+def load_config(config_path):
     config = configparser.ConfigParser()
     config['DEFAULT'] = {'hostname_col': 'A', 'group_by_col': 'B'}
-    if len(config.read(config_file)) > 0:
+    if len(config.read(config_path)) > 0:
         return config['xlsx_inventory']
     else:
-        print('\033[91mConfiguration File "%s" not Found!\033[0m' % config_file)
+        print('\033[91mConfiguration File "%s" not Found!\033[0m' % config_path)
         exit(1)
 
 
@@ -92,9 +109,9 @@ def parse_args():
 
 
 def sheet_to_inventory(group_by_col, hostname_col, sheet):
-    if type(group_by_col) is str:
+    if isinstance(group_by_col, six.string_types):
         group_by_col = column_index_from_string(coordinate_from_string(group_by_col + '1')[0]) - 1
-    if type(hostname_col) is str:
+    if isinstance(hostname_col, six.string_types):
         hostname_col = column_index_from_string(coordinate_from_string(hostname_col + '1')[0]) - 1
 
     groups = {
