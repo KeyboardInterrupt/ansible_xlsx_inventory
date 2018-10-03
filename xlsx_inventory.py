@@ -81,7 +81,7 @@ def create_config(filename=None, group_by_col=None, hostname_col=None, sheet=Non
         config['xlsx_inventory']['hostname_col'] = hostname_col
     if sheet is not None:
         config['xlsx_inventory']['sheet'] = sheet
-    with open(config_file, 'w')as cf:
+    with open(find_config_file(), 'w')as cf:
         config.write(cf)
 
 
