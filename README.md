@@ -66,7 +66,7 @@ Included in this Repository is a Example Excel Spreadsheet, containing multiple 
 
 Servers can be grouped by any Column, i.E. with the included example file you could choose to group your hosts by the Column `B` (__Project__) or `D` (__Environment__) :
 
-The example file also contains two posible Columns that could be used for unique Hostnames, either `A` (__VM Name__) or `E` (__DNS Name__) would be a good choices, depending on your DNS Settings/Environment.
+The example file also contains two possible Columns that could be used for unique Hostnames, either `A` (__VM Name__) or `E` (__DNS Name__) would be a good choices, depending on your DNS Settings/Environment.
 
 
 ## Host variables
