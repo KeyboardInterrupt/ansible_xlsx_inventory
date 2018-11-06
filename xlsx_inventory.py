@@ -42,7 +42,7 @@ def main():
         inventory = sheet_to_inventory(group_by_col=config['group_by_col'], hostname_col=config['hostname_col'],
                                        sheet=sheet)
         if args.list:
-            print(json.dumps(inventory, indent=4, sort_keys=True))
+            print(json.dumps(inventory, indent=4, sort_keys=True, default=str))
         if args.config:
             create_config(filename=args.file, group_by_col=args.group_by_col, hostname_col=args.hostname_col,
                           sheet=args.sheet)
@@ -50,7 +50,7 @@ def main():
             try:
                 print(json.dumps(
                     inventory['_meta']['hostvars'][args.host],
-                    indent=4, sort_keys=True))
+                    indent=4, sort_keys=True, default=str))
             except KeyError as e:
                 print('\033[91mHost "%s" not Found!\033[0m' % e)
                 print(e)
