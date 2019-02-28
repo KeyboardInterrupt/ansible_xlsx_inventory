@@ -6,7 +6,7 @@ import argparse
 import configparser
 import six
 from openpyxl import load_workbook
-from openpyxl.utils import coordinate_from_string, column_index_from_string
+from openpyxl.utils.cell import coordinate_from_string, column_index_from_string
 
 try:
     FileNotFoundError
