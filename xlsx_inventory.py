@@ -109,8 +109,11 @@ def parse_args():
 
 
 def sheet_to_inventory(group_by_col, hostname_col, sheet):
+    group_by_cols = []
     if isinstance(group_by_col, six.string_types):
-        group_by_col = column_index_from_string(coordinate_from_string(group_by_col + '1')[0]) - 1
+        for group_col in group_by_col.split(','):
+            group_col = column_index_from_string(coordinate_from_string(group_col + '1')[0]) - 1
+            group_by_cols.append(group_col)
     if isinstance(hostname_col, six.string_types):
         hostname_col = column_index_from_string(coordinate_from_string(hostname_col + '1')[0]) - 1
 
@@ -120,28 +123,27 @@ def sheet_to_inventory(group_by_col, hostname_col, sheet):
         }
     }
     rows = list(sheet.rows)
-
-    for row in rows[1:]:
-        host = row[hostname_col].value
-        if host is None:
-            continue
-        group = row[group_by_col].value
-        if group is None:
-            group = default_group
-        if group not in groups.keys():
-            groups[group] = {
-                'hosts': [],
-                'vars': {}
-            }
-        groups[group]['hosts'].append(row[hostname_col].value)
-        groups['_meta']['hostvars'][row[hostname_col].value] = {}
-        for xlsx_head in rows[:1]:
-            for idx, var_name in enumerate(xlsx_head):
-                if var_name.value is None:
-                    var_name.value = "xlsx_" + var_name.coordinate
-                if row[idx].value is not None:
-                    groups['_meta']['hostvars'][row[0].value][var_name.value.lower().replace(' ', '_')] = row[idx].value
-
+    for group_by_col in group_by_cols:
+        for row in rows[1:]:
+            host = row[hostname_col].value
+            if host is None:
+                continue
+            group = row[group_by_col].value
+            if group is None:
+                group = default_group
+            if group not in groups.keys():
+                groups[group] = {
+                    'hosts': [],
+                    'vars': {}
+                }
+            groups[group]['hosts'].append(row[hostname_col].value)
+            groups['_meta']['hostvars'][row[hostname_col].value] = {}
+            for xlsx_head in rows[:1]:
+                for idx, var_name in enumerate(xlsx_head):
+                    if var_name.value is None:
+                        var_name.value = "xlsx_" + var_name.coordinate
+                    if row[idx].value is not None:
+                        groups['_meta']['hostvars'][row[0].value][var_name.value.lower().replace(' ', '_')] = row[idx].value
     return groups
 
 
