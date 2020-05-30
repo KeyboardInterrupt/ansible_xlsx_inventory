@@ -35,10 +35,7 @@ def main():
     config = load_config(config_path)
     try:
         wb = load_workbook(config['xlsx_inventory_file'])
-        if 'sheet' in config:
-            sheet = wb[config['sheet']]
-        else:
-            sheet = wb.active
+        sheet = wb[config['sheet']] if 'sheet' in config else wb.active
         inventory = sheet_to_inventory(group_by_col=config['group_by_col'], hostname_col=config['hostname_col'],
                                        sheet=sheet)
         if args.list:
@@ -133,7 +130,7 @@ def sheet_to_inventory(group_by_col, hostname_col, sheet):
                 'hosts': [],
                 'vars': {}
             }
-        groups[group]['hosts'].append(row[hostname_col].value)
+        groups[group]['hosts'].append(host)
         groups['_meta']['hostvars'][row[hostname_col].value] = {}
         for xlsx_head in rows[:1]:
             for idx, var_name in enumerate(xlsx_head):
